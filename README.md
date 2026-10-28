@@ -23,6 +23,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how it works and why.
 | Admin login, bookings, calendar, block time (with conflict choices), weekly hours, repeating blocks, settings | Working, tested |
 | Privacy of public API (no names, emails, titles, notes, reasons) | Working, tested |
 | Email notifications | **Pending**: code is in place, switched off until a Resend API key is added |
+| First-run admin setup page (`/admin/setup`) | Working, tested |
 | Hosting / domain | **Pending**: needs Donald's accounts (see Deployment) |
 
 ## Running locally
@@ -49,7 +50,8 @@ TEST_DATABASE_URL=postgres://user:pass@localhost:5432/booking_test npm test
 
 # End-to-end tests (API + real browser) against a running production build
 DATABASE_URL=<test db> npx tsx scripts/migrate.ts
-DATABASE_URL=<test db> DISABLE_RATE_LIMIT=true npm run build && npx next start -p 3100
+DATABASE_URL=<test db> npm run build
+DATABASE_URL=<test db> DISABLE_RATE_LIMIT=true ADMIN_SETUP_CODE=test-setup-code-123 npx next start -p 3100
 E2E_BASE_URL=http://localhost:3100 TEST_DATABASE_URL=<test db> npm test
 ```
 
@@ -59,20 +61,19 @@ everything on every push (`.github/workflows/ci.yml`).
 ## Deployment
 
 Recommended: **Vercel** (app) + **Supabase** or **Neon** (PostgreSQL). Both have free tiers.
+A step-by-step guide in Albanian for non-technical setup is in [docs/DEPLOY-SQ.md](docs/DEPLOY-SQ.md).
 
-1. **Database.** Create a Supabase project (or Neon database). Copy the connection string.
-   On Supabase use the *Session pooler* string (port 5432) under Project Settings → Database.
-2. **Run migrations and create the admin login** from your computer:
-   ```bash
-   DATABASE_URL="<connection string>" DATABASE_SSL=true npx tsx scripts/migrate.ts
-   DATABASE_URL="<connection string>" DATABASE_SSL=true npx tsx scripts/create-admin.ts
-   ```
-3. **App.** Import the GitHub repo in Vercel and set these environment variables:
-   - `DATABASE_URL`: the connection string
-   - `DATABASE_SSL`: `true`
-   - `APP_URL`: your public URL, e.g. `https://book.example.com`
-   - optional `RESEND_API_KEY` and `EMAIL_FROM` for email (see below)
-4. **Domain.** Add your domain in Vercel → Settings → Domains. Your link becomes
+1. **Database.** Create a Supabase project and copy the *Transaction pooler* connection string
+   (Connect → Connection string), with your database password filled in.
+2. **App.** Import the GitHub repo in Vercel and set:
+   - `DATABASE_URL`: the connection string (SSL is enabled automatically for hosted databases)
+   - `ADMIN_SETUP_CODE`: a secret of 8+ characters, used once to create the admin login
+   - optional `APP_URL` (defaults to Vercel's production URL), `RESEND_API_KEY`, `EMAIL_FROM`
+3. **Deploy.** `npm run build` applies database migrations automatically before building.
+4. **Admin login.** Open `/admin/setup`, enter the setup code, your email and a password.
+   Setup switches itself off once an admin exists; you can then remove `ADMIN_SETUP_CODE`.
+   (Alternatively run `npm run admin:create` with `DATABASE_URL` set.)
+5. **Domain.** Add your domain in Vercel → Settings → Domains. Your link becomes
    `https://<your-domain>/book/donald`.
 
 Any Node host (Railway, Render, a VPS) works the same way: `npm run build && npm start`.

@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // Every admin page and API route still verifies the session against the database.
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  if (pathname.startsWith("/admin") && pathname !== "/admin/login" && !req.cookies.has("btd_admin")) {
+  if (pathname.startsWith("/admin") && !["/admin/login", "/admin/setup"].includes(pathname) && !req.cookies.has("btd_admin")) {
     const url = req.nextUrl.clone();
     url.pathname = "/admin/login";
     url.search = "";

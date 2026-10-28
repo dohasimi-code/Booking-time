@@ -1,15 +1,18 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { Client } from "pg";
+import { pgConfig } from "../src/lib/dbconfig";
 
 async function main() {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) throw new Error("DATABASE_URL is not set");
-  const client = new Client({
-    connectionString,
-    ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined,
-  });
+  if (!process.env.DATABASE_URL) {
+    // Lets `npm run build` work without a database (e.g. a quick local build).
+    console.log("DATABASE_URL is not set; skipping migrations.");
+    return;
+  }
+  const client = new Client(pgConfig());
   await client.connect();
+  // Two deployments building at once must not apply the same migration twice.
+  await client.query("select pg_advisory_lock(727274)");
   await client.query(
     "create table if not exists schema_migrations (name text primary key, applied_at timestamptz not null default now())",
   );
