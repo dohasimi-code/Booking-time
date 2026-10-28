@@ -1,12 +1,12 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { Client } from "pg";
-import { pgConfig } from "../src/lib/dbconfig";
+import { databaseUrl, pgConfig } from "../src/lib/dbconfig";
 
 async function main() {
-  if (!process.env.DATABASE_URL) {
+  if (!databaseUrl()) {
     // Lets `npm run build` work without a database (e.g. a quick local build).
-    console.log("DATABASE_URL is not set; skipping migrations.");
+    console.log("No DATABASE_URL or POSTGRES_URL set; skipping migrations.");
     return;
   }
   const client = new Client(pgConfig());
