@@ -1,17 +1,12 @@
 import { Pool, type PoolClient } from "pg";
+import { pgConfig } from "./dbconfig";
 
 // Server-only database access. Never import this from a client component.
 const globalForDb = globalThis as unknown as { __bookingPool?: Pool };
 
 export function getPool(): Pool {
   if (!globalForDb.__bookingPool) {
-    const connectionString = process.env.DATABASE_URL;
-    if (!connectionString) throw new Error("DATABASE_URL is not set");
-    globalForDb.__bookingPool = new Pool({
-      connectionString,
-      max: Number(process.env.DATABASE_POOL_MAX ?? 5),
-      ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined,
-    });
+    globalForDb.__bookingPool = new Pool({ ...pgConfig(), max: Number(process.env.DATABASE_POOL_MAX ?? 5) });
   }
   return globalForDb.__bookingPool;
 }

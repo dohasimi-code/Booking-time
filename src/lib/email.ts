@@ -51,7 +51,9 @@ function when(b: BookingDetails, zone: string) {
 }
 
 export function buildEmails(n: Notification, ownerName: string, ownerEmail: string | null, zone: string): Email[] {
-  const appUrl = (process.env.APP_URL ?? "").replace(/\/$/, "");
+  // On Vercel the production URL is provided automatically if APP_URL isn't set.
+  const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "";
+  const appUrl = (process.env.APP_URL || vercelUrl).replace(/\/$/, "");
   const b = n.booking;
   const w = when(b, zone);
   const lines = [`Date: ${w.date}`, `Time: ${w.time}`, b.title ? `Meeting: ${b.title}` : null, `Reference: ${b.reference}`]

@@ -4,6 +4,7 @@
 import { createInterface } from "node:readline/promises";
 import bcrypt from "bcryptjs";
 import { Client } from "pg";
+import { pgConfig } from "../src/lib/dbconfig";
 
 async function prompt(question: string): Promise<string> {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -20,10 +21,7 @@ async function main() {
   if (password.length < 12) throw new Error("Password must be at least 12 characters");
 
   const hash = await bcrypt.hash(password, 12);
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined,
-  });
+  const client = new Client(pgConfig());
   await client.connect();
   await client.query(
     `insert into admin_users (email, name, password_hash) values ($1, $2, $3)

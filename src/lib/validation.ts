@@ -128,3 +128,10 @@ export const loginSchema = z.object({
   email: z.string().trim().toLowerCase().max(254),
   password: z.string().min(1).max(200),
 });
+
+export const setupSchema = z.object({
+  code: z.string().min(1, "Please enter the setup code.").max(200),
+  name: z.string().trim().min(1, "Please enter your name.").max(80),
+  email: z.string().trim().toLowerCase().max(254).pipe(z.email("Please enter a valid email address.")),
+  password: z.string().min(12, "The password needs at least 12 characters.").max(200),
+});
